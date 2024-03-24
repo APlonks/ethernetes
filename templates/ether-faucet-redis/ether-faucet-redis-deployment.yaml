@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ether-faucet-redis-deployment
+  labels:
+    app: ether-faucet-redis-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ether-faucet-redis-pod
+  template:
+    metadata:
+      labels:
+        app: ether-faucet-redis-pod
+    spec:
+      containers:
+      - name: ether-faucet-redis-container
+        image: docker.io/redis/redis-stack:7.2.0-v9
+        ports:
+        - containerPort: 8001
+        - containerPort: 6379
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

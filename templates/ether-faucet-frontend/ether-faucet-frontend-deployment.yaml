@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ether-faucet-frontend-deployment
+  labels:
+    app: ether-faucet-frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ether-faucet-frontend-pod
+  template:
+    metadata:
+      labels:
+        app: ether-faucet-frontend-pod
+    spec:
+      containers:
+      - name: ether-faucet-frontend-container
+        image: ghcr.io/aplonks/ether-faucet-frontend:main
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

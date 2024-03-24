@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ether-faucet-redis-svc
+spec:
+  selector: 
+    app: ether-faucet-redis-pod
+  ports:
+    - name: redis-web-interface
+      protocol: TCP
+      port: 80
+      targetPort: 8001
+    - name: redis
+      protocol: TCP
+      port: 6379
+      targetPort: 6379

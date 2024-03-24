@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geth-bootnode-deployment
+  labels:
+    app: geth-bootnode-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geth-bootnode-pod
+  template:
+    metadata:
+      labels:
+        app: geth-bootnode-pod
+    spec:
+      initContainers:
+      - name: init-configmap
+        image: busybox
+        command:
+        - sh
+        - -c
+        args:
+        - | 
+          ls -la /execution-ro/ && \
+          cp /execution-ro/* /execution-rw/ && \
+          chmod -R 777 /execution-rw/ && \
+          mkdir -p /execution-rw/keystore && \
+          mv /execution-rw/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524 /execution-rw/keystore/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524
+        volumeMounts:
+        - name: geth-bootnode-volume
+          mountPath: "/execution-ro/"
+          readOnly: False
+        - name: shared-data
+          mountPath: "/execution-rw/"
+
+      - name: geth-init
+        image: docker.io/ethereum/client-go:v1.13.13
+        args:
+        - --datadir=/execution
+        - init 
+        - /execution/genesis-poa.json
+        volumeMounts:
+        - name: shared-data
+          mountPath: "/execution/"
+
+      containers:
+      - name: geth
+        image: docker.io/ethereum/client-go:v1.13.13
+        # command:
+        # - sh
+        # - -c
+        # - sleep 3600
+        args:
+        - --http
+        - --http.addr=0.0.0.0
+        - --http.api=admin,clique,debug,engine,eth,miner,net,rpc,txpool,web3
+        - --http.corsdomain=*
+        - --http.port=8545
+        - --http.vhosts=*
+        - --ws
+        - --ws.api=admin,clique,debug,engine,eth,miner,net,rpc,txpool,web3
+        - --ws.addr=0.0.0.0
+        - --ws.port=8546
+        - --ws.origins=*
+        - --authrpc.vhosts=*
+        - --authrpc.addr=0.0.0.0
+        - --authrpc.port=8551
+        - --datadir=/execution
+        - --allow-insecure-unlock
+        - --unlock=0x123463a4b065722e99115d6c222f267d9cabb524
+        - --password=/execution/geth_password.txt
+        - --nodiscover
+        - --syncmode=full
+        - --metrics
+        - --metrics.addr=0.0.0.0
+        - --metrics.port=6060
+        - --metrics.expensive
+        - --mine
+        - --miner.etherbase=0x123463a4b065722e99115d6c222f267d9cabb524
+        ports:
+        - name: http-endpoint
+          containerPort: 8545
+        - name: ws-endpoint
+          containerPort: 8546
+        - name: auth-rpc
+          containerPort: 8551
+        - name: metrics
+          containerPort: 6060
+        volumeMounts:
+        - name: shared-data
+          mountPath: "/execution/"
+        resources:
+          limits: 
+            memory: "1Gi"
+            cpu: "1000m"
+
+      volumes:
+      - name: geth-bootnode-volume
+        configMap:
+          name: geth-bootnode
+      - name: shared-data
+        emptyDir: {}
+            

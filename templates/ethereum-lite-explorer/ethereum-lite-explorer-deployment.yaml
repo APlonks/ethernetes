@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ethereum-lite-explorer-deployment
+  labels:
+    app: ethereum-lite-explorer-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ethereum-lite-explorer-pod
+  template:
+    metadata:
+      labels:
+        app: ethereum-lite-explorer-pod
+    spec:
+      containers:
+      - name: ethereum-lite-explorer-container
+        image: docker.io/alethio/ethereum-lite-explorer:latest
+        envFrom:
+        - configMapRef:
+            name: ethereum-lite-explorer-configmap
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

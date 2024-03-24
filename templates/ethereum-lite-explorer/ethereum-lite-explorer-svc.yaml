@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ethereum-lite-explorer-svc
+spec:
+  selector: 
+    app: ethereum-lite-explorer-pod
+  ports:
+    - name: web-interface
+      protocol: TCP
+      port: 80
+      targetPort: 80
