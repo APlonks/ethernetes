@@ -1,4 +1,6 @@
+# Ethernetes
 
+## Prerequisites
 
 In /etc/hosts or in DNS add
 ```
