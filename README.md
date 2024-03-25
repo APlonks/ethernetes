@@ -16,7 +16,10 @@ microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 10443:
 # Then port forward 10443 in vscode access it to http://localhost:10443
 ```
 
-
+### Configure Ingress
+```bash
+microk8s enable dashboard
+```
 
 ### Configure DNS 
 ```bash
