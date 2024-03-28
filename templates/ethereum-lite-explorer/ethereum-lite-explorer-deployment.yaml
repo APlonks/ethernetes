@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: ethereum-lite-explorer-deployment
   labels:
+    project: ethernetes
     app: ethereum-lite-explorer-deployment
 spec:
   replicas: 1

@@ -2,5 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ethereum-lite-explorer-configmap
+  labels:
+    project: ethernetes
 data:
   APP_NODE_URL: http://geth-bootnode

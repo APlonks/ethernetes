@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: ether-faucet-backend-deployment
   labels:
+    project: ethernetes
     app: ether-faucet-backend-deployment
 spec:
   replicas: 1
@@ -12,6 +13,7 @@ spec:
   template:
     metadata:
       labels:
+        project: ethernetes
         app: ether-faucet-backend-pod
     spec:
       containers:

@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: geth-bootnode-deployment
   labels:
+    project: ethernetes
     app: geth-bootnode-deployment
 spec:
   replicas: 1

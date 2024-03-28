@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: ether-faucet-redis-deployment
   labels:
+    project: ethernetes
     app: ether-faucet-redis-deployment
 spec:
   replicas: 1
@@ -12,6 +13,7 @@ spec:
   template:
     metadata:
       labels:
+        project: ethernetes
         app: ether-faucet-redis-pod
     spec:
       containers:
