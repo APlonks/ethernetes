@@ -53,7 +53,7 @@ microk8s.helm install ethernetes-chart ethernetes-chart/
 
 In the host : 
 ```
-<IP> ether-faucet ether-faucet-api ethereum-lite-explorer geth-bootnode redis-web-interface
+<IP> ether-faucet ether-faucet-api ethereum-lite-explorer geth-bootnode redis-web-interface code-server
 ```
 Backend API Address for Ether-faucet : http://ether-faucet-api
 
