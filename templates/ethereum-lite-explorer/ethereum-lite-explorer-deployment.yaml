@@ -13,6 +13,7 @@ spec:
   template:
     metadata:
       labels:
+        project: ethernetes
         app: ethereum-lite-explorer-pod
     spec:
       containers:
