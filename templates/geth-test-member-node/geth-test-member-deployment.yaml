@@ -1,41 +1,53 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: geth-bootnode-deployment
+  name: geth-member-node-deployment
   labels:
     project: ethernetes
-    app: geth-bootnode-deployment
+    app: geth-member-node-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: geth-bootnode-pod
+      app: geth-member-node-pod
   template:
     metadata:
       labels:
         project: ethernetes
-        app: geth-bootnode-pod
+        app: geth-member-node-pod
     spec:
       initContainers:
-      - name: init-configmap
+      - name: geth-enode-retriever
+        # image: appropriate/curl
+        image: ubuntu
+        command: ["/bin/sh", "-c", "--"]
+        args:
+        - |
+          apt update && \
+          apt install curl jq -y \
+          until curl -s http://geth-bootnode-svc:8545 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}' | jq -r '.result.enode' > /shared-data/enode.txt; do
+            echo "Waiting for Geth bootnode to start..."
+            sleep 5
+          done
+        volumeMounts:
+        - name: shared-data
+          mountPath: "/shared-data"
+        
+      - name: init-execution-dir
         image: busybox
         command:
         - sh
         - -c
         args:
         - | 
-          ls -la /execution-ro/ && \
-          cp /execution-ro/* /execution-rw/ && \
-          chmod -R 777 /execution-rw/ && \
-          mkdir -p /execution-rw/keystore && \
-          mv /execution-rw/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524 /execution-rw/keystore/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524 && \
-          cp -r /execution-rw/ /shared-data-between-geth-nodes/
+          cp /shared-data-between-geth-nodes* /execution && \
+          chmod -R 777 /execution && \
+          mkdir -p /execution/keystore && \
+          mv /execution/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524 /execution-rw/keystore/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524
+          ls -l /execution
         volumeMounts:
-        - name: geth-bootnode-volume
-          mountPath: "/execution-ro/"
-          readOnly: False
         - name: shared-data
-          mountPath: "/execution-rw/"
+          mountPath: "/execution/"
         - name: shared-data-between-geth-nodes
           mountPath: "shared-data-between-geth-nodes"
 
@@ -57,6 +69,7 @@ spec:
         # - -c
         # - sleep 3600
         args:
+        - --bootnodes=`cat /root/.ethereum/bootnodes`
         - --http
         - --http.addr=0.0.0.0
         - --http.api=admin,clique,debug,engine,eth,miner,net,rpc,txpool,web3
@@ -81,8 +94,6 @@ spec:
         - --metrics.addr=0.0.0.0
         - --metrics.port=6060
         - --metrics.expensive
-        - --mine
-        - --miner.etherbase=0x123463a4b065722e99115d6c222f267d9cabb524
         ports:
         - name: http-endpoint
           containerPort: 8545
@@ -107,9 +118,6 @@ spec:
             cpu: "1000m"
 
       volumes:
-      - name: geth-bootnode-volume
-        configMap:
-          name: geth-bootnode
       - name: shared-data
         emptyDir: {}
       - name: shared-data-between-geth-nodes

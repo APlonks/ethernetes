@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: geth-bootnode-svc
+  name: geth-member-node-svc
   labels:
     project: ethernetes
 spec:
   selector: 
-    app: geth-bootnode-pod
+    app: geth-member-node-pod
   ports:
     - name: http-endpoint
       port: 8545
