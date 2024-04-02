@@ -101,6 +101,8 @@ spec:
         volumeMounts:
         - name: shared-data
           mountPath: "/execution/"
+        - name: shared-data-between-geth-nodes
+          mountPath: "shared-data-between-geth-nodes"
         resources:
           limits: 
             memory: "1Gi"

@@ -20,31 +20,45 @@ spec:
       - name: geth-enode-retriever
         # image: appropriate/curl
         image: ubuntu
-        command: ["/bin/sh", "-c", "--"]
+        command: 
+        - "/bin/sh"
+        - "-c"
+        - "--"
         args:
         - |
           apt update && \
-          apt install curl jq -y \
-          until curl -s http://geth-bootnode-svc:8545 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}' | jq -r '.result.enode' > /shared-data/enode.txt; do
-            echo "Waiting for Geth bootnode to start..."
+          apt install curl jq -y && \
+          echo "Entering" && \
+          ls larth /shared-data-between-geth-nodes && \
+          until curl -s http://geth-bootnode-svc:8545 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}' | jq -r '.result.enode' > /shared-data-between-geth-nodes/enode.txt ; do
+            echo "Entered" && \
+            echo "Waiting for Geth bootnode to start..." && \
             sleep 5
           done
         volumeMounts:
-        - name: shared-data
-          mountPath: "/shared-data"
+        - name: shared-data-between-geth-nodes
+          mountPath: "/shared-data-between-geth-nodes"
         
       - name: init-execution-dir
         image: busybox
         command:
         - sh
         - -c
+        - "--"
         args:
         - | 
-          cp /shared-data-between-geth-nodes* /execution && \
+          apt install three && \
+          sleep 5 && \
+          cp  /shared-data-between-geth-nodes/enode.txt /execution && \
+          echo "Printing /execution"
+          ls -larth /execution
           chmod -R 777 /execution && \
+          echo "Dir /execution mode changed" && \
           mkdir -p /execution/keystore && \
-          mv /execution/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524 /execution-rw/keystore/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524
-          ls -l /execution
+          echo "Dir /execution/keystore created" && \
+          ls -l /execution && \
+          three /execution && \
+
         volumeMounts:
         - name: shared-data
           mountPath: "/execution/"
