@@ -29,8 +29,9 @@ spec:
           apt update && \
           apt install curl jq -y && \
           echo "Entering" && \
-          ls larth /shared-data-between-geth-nodes && \
-          until curl -s http://geth-bootnode-svc:8545 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}' | jq -r '.result.enode' > /shared-data-between-geth-nodes/enode.txt ; do
+          ls -larth /shared-data-between-geth-nodes && \
+          rm -f /shared-data-between-geth-nodes/execution-rw/enode.txt && \
+          until curl -s http://geth-bootnode-svc:8545 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}' | jq -r '.result.enr' > /shared-data-between-geth-nodes/execution-rw/enode.txt ; do
             echo "Entered" && \
             echo "Waiting for Geth bootnode to start..." && \
             sleep 5
@@ -40,25 +41,29 @@ spec:
           mountPath: "/shared-data-between-geth-nodes"
         
       - name: init-execution-dir
-        image: busybox
+        image: ubuntu
         command:
-        - sh
-        - -c
+        - "/bin/sh"
+        - "-c"
         - "--"
         args:
         - | 
-          apt install three && \
+          apt update && \
+          apt install tree && \
           sleep 5 && \
-          cp  /shared-data-between-geth-nodes/enode.txt /execution && \
-          echo "Printing /execution"
-          ls -larth /execution
+          cp -r /shared-data-between-geth-nodes/execution-rw/* /execution && \
+          echo "Printing /execution" && \
+          ls -larth /execution && \
           chmod -R 777 /execution && \
+          echo""
+          echo "Content of /shared-data-between-geth-nodes"
+          tree /shared-data-between-geth-nodes
+          echo""
           echo "Dir /execution mode changed" && \
           mkdir -p /execution/keystore && \
           echo "Dir /execution/keystore created" && \
           ls -l /execution && \
-          three /execution && \
-
+          tree /execution
         volumeMounts:
         - name: shared-data
           mountPath: "/execution/"
@@ -83,7 +88,8 @@ spec:
         # - -c
         # - sleep 3600
         args:
-        - --bootnodes=`cat /root/.ethereum/bootnodes`
+        # - --bootnodes=`cat /execution/enode.txt`
+        - --bootnodes=enr:-Jy4QB1V0Hiy44Mrr6J7ZLCUWYopYDxG3nbl8CiU8O5vlg6zP9B0ziSW8MFsQZK2PEr9QVY9e0rFTPgiZJ_kCi8l_HWGAY6lxpwMg2V0aMfGhANBT1WAgmlkgnY0gmlwhH8AAAGJc2VjcDI1NmsxoQP5GnblLmN7NHniDy5Ffd2Hlj0N7gh-awAA6dn0VlPhrIRzbmFwwIN0Y3CCdl8
         - --http
         - --http.addr=0.0.0.0
         - --http.api=admin,clique,debug,engine,eth,miner,net,rpc,txpool,web3
