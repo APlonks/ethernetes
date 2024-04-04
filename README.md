@@ -13,7 +13,7 @@ microk8s enable dashboard
 
 microk8s kubectl create token default
 
-microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 10443:443
+microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 10443:443 --address 0.0.0.0
 
 # Then port forward 10443 in vscode access it to http://localhost:10443
 ```
