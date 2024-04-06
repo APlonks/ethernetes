@@ -16,29 +16,30 @@ spec:
         project: ethernetes
         app: geth-member-node-pod
     spec:
+      restartPolicy: "Always"
       initContainers:
-      - name: geth-enode-retriever
-        # image: appropriate/curl
-        image: ubuntu
-        command: 
-        - "/bin/sh"
-        - "-c"
-        - "--"
-        args:
-        - |
-          apt update && \
-          apt install curl jq -y && \
-          echo "Entering" && \
-          ls -larth /shared-data-between-geth-nodes && \
-          rm -f /shared-data-between-geth-nodes/execution-rw/enode.txt && \
-          until curl -s http://geth-bootnode-svc:8545 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}' | jq -r '.result.enr' > /shared-data-between-geth-nodes/execution-rw/enode.txt ; do
-            echo "Entered" && \
-            echo "Waiting for Geth bootnode to start..." && \
-            sleep 5
-          done
-        volumeMounts:
-        - name: shared-data-between-geth-nodes
-          mountPath: "/shared-data-between-geth-nodes"
+      # - name: geth-enode-retriever
+      #   # image: appropriate/curl
+      #   image: ubuntu
+      #   command: 
+      #   - "/bin/sh"
+      #   - "-c"
+      #   - "--"
+      #   args:
+      #   - |
+      #     apt update && \
+      #     apt install curl jq -y && \
+      #     echo "Entering" && \
+      #     ls -larth /shared-data-between-geth-nodes && \
+      #     rm -f /shared-data-between-geth-nodes/execution-rw/enode.txt && \
+      #     until curl -s http://geth-bootnode-svc:8545 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}' | jq -r '.result.enr' > /shared-data-between-geth-nodes/execution-rw/enode.txt ; do
+      #       echo "Entered" && \
+      #       echo "Waiting for Geth bootnode to start..." && \
+      #       sleep 5
+      #     done
+      #   volumeMounts:
+      #   - name: shared-data-between-geth-nodes
+      #     mountPath: "/shared-data-between-geth-nodes"
         
       - name: init-execution-dir
         image: ubuntu
@@ -49,16 +50,35 @@ spec:
         args:
         - | 
           apt update && \
+          apt install curl jq -y && \
+          echo "Going to retrieve enode" && \
+          ls -larth /shared-data-between-geth-nodes && \
+          rm -f /shared-data-between-geth-nodes/execution-rw/enode.txt && \
+          until curl -s http://geth-bootnode-svc:8545 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}' | jq -r '.result.enode' > /shared-data-between-geth-nodes/execution-rw/enode.txt ; do
+            echo "Entered" && \
+            echo "Waiting for Geth bootnode to start..." && \
+            sleep 5
+          done
+          enode=$(cat "/shared-data-between-geth-nodes/execution-rw/enode.txt") && \
+          echo "[Node.P2P]" > /execution/config.toml
+          echo StaticNodes = [\"$enode@geth-bootnode-svc:30303\"] >> /execution/config.toml && \
+          echo "Content of /execution/config.toml:" && \
+          cat /execution/config.toml && \
+
+          echo "" && \
+          echo "Enode retrieved" && \
+          echo "" && \
+
           apt install tree && \
           sleep 5 && \
           cp -r /shared-data-between-geth-nodes/execution-rw/* /execution && \
           echo "Printing /execution" && \
           ls -larth /execution && \
           chmod -R 777 /execution && \
-          echo""
-          echo "Content of /shared-data-between-geth-nodes"
-          tree /shared-data-between-geth-nodes
-          echo""
+          echo"" && \
+          echo "Content of /shared-data-between-geth-nodes" && \
+          tree /shared-data-between-geth-nodes && \
+          echo"" && \
           echo "Dir /execution mode changed" && \
           mkdir -p /execution/keystore && \
           echo "Dir /execution/keystore created" && \
@@ -73,8 +93,8 @@ spec:
       - name: geth-init
         image: docker.io/ethereum/client-go:v1.13.13
         args:
-        - --datadir=/execution
         - init 
+        - --datadir=/execution
         - /execution/genesis-poa.json
         volumeMounts:
         - name: shared-data
@@ -88,8 +108,13 @@ spec:
         # - -c
         # - sleep 3600
         args:
-        # - --bootnodes=`cat /execution/enode.txt`
-        - --bootnodes=enr:-Jy4QB1V0Hiy44Mrr6J7ZLCUWYopYDxG3nbl8CiU8O5vlg6zP9B0ziSW8MFsQZK2PEr9QVY9e0rFTPgiZJ_kCi8l_HWGAY6lxpwMg2V0aMfGhANBT1WAgmlkgnY0gmlwhH8AAAGJc2VjcDI1NmsxoQP5GnblLmN7NHniDy5Ffd2Hlj0N7gh-awAA6dn0VlPhrIRzbmFwwIN0Y3CCdl8
+        - --datadir=/execution
+        - --networkid=32382
+        # - --bootnodes=enode://dae758e3250e93da5ca6e8369bea07e06eb5f9bc8408b015a993d013220d129f28059dadcd6d24a8ea59012723e96e71c78c1a06b1087ff95428c1fb924e4ccd@geth-bootnode-svc:30303
+        - --config=/execution/config.toml
+        - --verbosity=5
+        - --nat=extip:0.0.0.0
+        - --port=30303
         - --http
         - --http.addr=0.0.0.0
         - --http.api=admin,clique,debug,engine,eth,miner,net,rpc,txpool,web3
@@ -104,7 +129,6 @@ spec:
         - --authrpc.vhosts=*
         - --authrpc.addr=0.0.0.0
         - --authrpc.port=8551
-        - --datadir=/execution
         - --allow-insecure-unlock
         - --unlock=0x123463a4b065722e99115d6c222f267d9cabb524
         - --password=/execution/geth_password.txt

@@ -16,6 +16,7 @@ spec:
         project: ethernetes
         app: geth-bootnode-pod
     spec:
+      restartPolicy: "Always"
       initContainers:
       - name: init-configmap
         image: busybox
@@ -42,8 +43,8 @@ spec:
       - name: geth-init
         image: docker.io/ethereum/client-go:v1.13.13
         args:
-        - --datadir=/execution
         - init 
+        - --datadir=/execution
         - /execution/genesis-poa.json
         volumeMounts:
         - name: shared-data
@@ -57,6 +58,11 @@ spec:
         # - -c
         # - sleep 3600
         args:
+        - --datadir=/execution
+        - --networkid=32382
+        - --verbosity=5
+        - --nat=extip:0.0.0.0
+        - --port=30303
         - --http
         - --http.addr=0.0.0.0
         - --http.api=admin,clique,debug,engine,eth,miner,net,rpc,txpool,web3
@@ -71,7 +77,6 @@ spec:
         - --authrpc.vhosts=*
         - --authrpc.addr=0.0.0.0
         - --authrpc.port=8551
-        - --datadir=/execution
         - --allow-insecure-unlock
         - --unlock=0x123463a4b065722e99115d6c222f267d9cabb524
         - --password=/execution/geth_password.txt

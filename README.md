@@ -43,6 +43,16 @@ Test a service configured in the cluster :
 nslookup geth-bootnode-svc
 ```
 
+### Configure cilium instead calico
+```bash
+microk8s enable community                                   # To enable community add-on
+microk8s enable cilium                                      # To enable cilium
+microk8s cilium hubble enable                               # To enable hubble
+microk8s cilium hubble enable --ui                          # To enable ui
+microk8s cilium status                                      # To verify status
+kubectl port-forward -n kube-system svc/hubble-ui 12000:80  # Port forward hubble-ui
+```
+
 ## RUN and STOP
 
 git clone 
@@ -61,3 +71,10 @@ Backend API Address for Ether-faucet : http://ether-faucet-api
 ### Uninstall the chart : 
 
 microk8s.helm uninstall ethernetes-chart
+
+
+
+TODO : 
+TO connect new peers i have to:
+- Retrieve enode and add it with :
+\<enode>@geth-bootnode-svc:30303
